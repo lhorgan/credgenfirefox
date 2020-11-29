@@ -1,35 +1,3 @@
-// about:config
-// xpinstall.signatures.required : false
-
-// const webdriver = require('selenium-webdriver'),
-//     By = webdriver.By,
-//     until = webdriver.until;
-
-// // https://sqa.stackexchange.com/questions/34851/nodejs-selenium-webdriver-firefox-geckodriver-set-browser-binary-location-withou
-// const firefox = require('selenium-webdriver/firefox');
-// const options = new firefox.Options()
-//     .setBinary('/home/luke/Documents/firefox2020/firefox/firefox'); 
-
-// const driver = new webdriver.Builder()
-//     .forBrowser('firefox')
-//     .build();
-
-// driver.get('https://twitter.com/realDonaldTrump/');
-// /*
-// driver.findElement(By.name('q')).sendKeys('webdriver');
-
-// driver.sleep(1000).then(function() {
-//   driver.findElement(By.name('q')).sendKeys(webdriver.Key.TAB);
-// });
-
-// driver.findElement(By.name('btnK')).click();*/
-
-// driver.sleep(2000).then(function() {
-//   driver.getTitle().then(function(title) {
-//     console.log(title);
-//     driver.quit();
-//   });
-// });
 const express = require("express");
 
 class Web {
@@ -38,6 +6,22 @@ class Web {
     this.app.use(express.json());
     this.server = require('http').createServer(this.app);
     this.port = 3040;
+    this.loadTwitter = true;
+  }
+
+  loadFirefox() {
+    const webdriver = require('selenium-webdriver'),
+      By = webdriver.By,
+      until = webdriver.until;
+    const firefox = require('selenium-webdriver/firefox');
+    const options = new firefox.Options();
+    options.setBinary('/home/luke/Documents/firefox_dev/firefox/firefox'); 
+    //options.setProfile("/home/luke/Documents/firefox_dev/devdev");
+    //options.addArguments("-profile", "/home/luke/Documents/firefox_dev/devdev")
+    this.driver = new webdriver.Builder()
+    .forBrowser('firefox')
+    .setFirefoxOptions(options)
+    .build();
   }
   
   listenHTTP() {
@@ -50,9 +34,32 @@ class Web {
       //console.log(req);
       console.log(req.body);
       res.send({"status": 200});
+      this.loadTwitter = true;
     });
+  }
+
+  async sleep(ms) {
+    return new Promise((accept, reject) => {
+      setTimeout(accept, ms);
+    });
+  }
+
+  async requestLoop() {
+    let lastRequestTime = 0;
+    while(true) {
+      if(this.loadTwitter && Date.now() - lastRequestTime >= 10000) {
+        lastRequestTime = Date.now();
+        this.loadTwitter = false;
+        this.driver.manage().deleteAllCookies();
+        console.log("LOADING TWITTER");
+        this.driver.get("https://twitter.com/realDonaldTrump");
+      }
+      await this.sleep(1000);
+    }
   }
 }
 
 let web = new Web();
+web.loadFirefox();
 web.listenHTTP();
+web.requestLoop();
