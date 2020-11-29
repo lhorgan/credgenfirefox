@@ -9,6 +9,12 @@
     "icons": {
       "48": "icons/border-48.png"
     },
+
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "soystuff@gmail.com"
+      }
+    },
   
     "content_scripts": [
       {
