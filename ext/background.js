@@ -1,5 +1,12 @@
 // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Intercept_HTTP_requests
+
+//const { request } = require("http");
+
 // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeSendHeaders
+
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/proxy/onRequest
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/proxy/ProxyInfo
+
 function logURL(requestDetails) {
   //console.log("Loading: " + requestDetails.url);
   if(requestDetails.url.startsWith("https://api.twitter.com/2/timeline/profile/")) {
@@ -27,9 +34,49 @@ async function postData(url = '', data = {}) {
   });
   return response.json(); // parses JSON response into native JavaScript objects
 }
-  
+
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeRequest
+ */
 browser.webRequest.onBeforeSendHeaders.addListener(
     logURL,
     {urls: ["<all_urls>"]},
     ["requestHeaders"]
+);
+
+// match pattern for the URLs to redirect
+var pattern1 = "https://pbs.twimg.com/*";
+var pattern2 = "https://video.twimg.com/*";
+//var pattern3 = "https://abs.twimg.com/*";
+
+// cancel function returns an object
+// which contains a property `cancel` set to `true`
+function cancel(requestDetails) {
+  console.log("Canceling: " + requestDetails.url);
+  return {cancel: true};
+}
+
+// add the listener,
+// passing the filter argument and "blocking"
+browser.webRequest.onBeforeRequest.addListener(
+  cancel,
+  {urls: [pattern1, pattern2]},
+  ["blocking"]
+);
+
+async function cacheCheck(requestDetails) {
+  console.log(requestDetails.url);
+  //if(caches.match(requestDetails)) {
+    console.log(`WE HAVE THIS IN THE CACHE YO: ${requestDetails.url}!`);
+    caches.open(requestDetails.url).then(function(cache) {
+      console.log("HERE IS THE CACHE INFO");
+      console.log(cache);
+    });
+  //}
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+  cacheCheck,
+  {urls: ["<all_urls>"]}
 );
