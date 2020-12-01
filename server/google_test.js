@@ -40,15 +40,18 @@ class Web {
           this.torRunning = true;
           accept(this.tor);
         }
-        else if(data.toString().indexOf("exiting cleanly") >= 0 && this.torRunning) {
-          console.log("SETTING TOR RUNNING FALSE");
-          this.torRunning = false;
-        }
+        // else if(data.toString().indexOf("exiting cleanly") >= 0) {
+        //   console.log("SETTING TOR RUNNING FALSE");
+        //   this.torRunning = false;
+        // }
       });
 
       this.tor.stderr.on('data', function(data) {
         console.log('tor error: ' + data.toString());
         data.toString();
+        if(data.toString() === "Terminated") {
+          this.torRunning = false;
+        }
       });
     });
   }
@@ -72,11 +75,11 @@ class Web {
         this.twitHits++;
         console.log(req.body);
         res.send({"status": 200});
-        await this.sleep(3000);
-        await this.killTor();
-        await this.sleep(2000);
-        await this.startTor();
-        this.loadTwitter = true;
+        // await this.sleep(3000);
+        // await this.killTor();
+        // await this.sleep(2000);
+        // await this.startTor();
+        // this.loadTwitter = true;
       }
       else {
         console.log("DUP REQUEST!");
@@ -85,13 +88,17 @@ class Web {
   }
 
   async killTor() {
-    return new Promise((accept, reject) => {
+    return new Promise(async (accept, reject) => {
       exec("killall tor");
+      await this.sleep(1000);
       while(true) {
         if(this.torRunning == false) {
-          //console.log("HOORAY TOR IS DEAD!");
+          console.log("HOORAY TOR IS DEAD!");
           accept();
           break;
+        }
+        else {
+          console.log("TOR NOT DEAD");
         }
         this.sleep(200);
       }
@@ -108,14 +115,14 @@ class Web {
     let lastRequestTime = 0;
     while(true) {
       console.log(`${this.loadTwitter} ${Date.now() - lastRequestTime}`)
-      if((this.loadTwitter && Date.now() - lastRequestTime >= 10000) || (Date.now() - lastRequestTime >= 15000)) {
-        lastRequestTime = Date.now();
-        this.loadTwitter = false;
-        this.driver.manage().deleteAllCookies();
-        console.log("LOADING TWITTER");
-        this.driver.get("https://twitter.com/realDonaldTrump");
-      }
-      await this.sleep(1000);
+      lastRequestTime = Date.now();
+      this.loadTwitter = false;
+      this.driver.manage().deleteAllCookies();
+      await this.killTor();
+      await this.startTor();
+      console.log("LOADING TWITTER");
+      this.driver.get("https://twitter.com/realDonaldTrump");
+      await this.sleep(10000);
     }
   }
 }
@@ -124,7 +131,11 @@ class Web {
   let web = new Web();
   web.loadFirefox();
   web.listenHTTP();
-  await web.startTor();
+  //await web.startTor();
   console.log("TOR STARTED!");
   web.requestLoop();
+  // while(true) {
+  //   await web.startTor();
+  //   await web.killTor();
+  // }
 })();
