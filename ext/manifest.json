@@ -28,6 +28,7 @@
     },
     
     "permissions": [
+        "proxy",
         "webRequest",
         "webRequestBlocking",
         "<all_urls>"

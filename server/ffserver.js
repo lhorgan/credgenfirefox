@@ -85,6 +85,14 @@ class Web {
         console.log("DUP REQUEST!");
       }
     });
+
+    this.app.post("/proxyPort", (req, res) => {
+      res.send({"status": 200, "port": this.randomInt(10000, 50000)});
+    });
+  }
+
+  randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
   async killTor() {
@@ -129,11 +137,13 @@ class Web {
 
 (async () => {
   let web = new Web();
-  web.loadFirefox();
+  //web.loadFirefox();
   web.listenHTTP();
   //await web.startTor();
   console.log("TOR STARTED!");
-  web.requestLoop();
+  
+  //web.requestLoop();
+  
   // while(true) {
   //   await web.startTor();
   //   await web.killTor();
